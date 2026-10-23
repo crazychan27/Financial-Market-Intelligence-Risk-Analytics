@@ -103,6 +103,7 @@ The PostgreSQL database is named `financial_market_intelligence`, with the conso
 ## Power BI Dashboard
 
 The interactive dashboard, titled **Financial Market Intelligence**, contains the following visuals:
+<img width="1202" height="677" alt="image" src="https://github.com/user-attachments/assets/d65a5864-2eb1-42e3-ac3a-8b267afda91c" />
 
 - **KPI cards:** Average daily return, highest price change, number of stocks, and maximum volatility.
 - **Daily closing prices:** Compares historical closing price trends across all five stocks.
