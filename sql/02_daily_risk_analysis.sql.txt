@@ -1,0 +1,14 @@
+
+SELECT
+    ticker,
+    ROUND(AVG(daily_return)::numeric * 100, 4)
+        AS avg_daily_return_pct,
+    ROUND(STDDEV(daily_return)::numeric * 100, 4)
+        AS daily_volatility_pct,
+    ROUND(MIN(daily_return)::numeric * 100, 2)
+        AS worst_daily_return_pct,
+    ROUND(MAX(daily_return)::numeric * 100, 2)
+        AS best_daily_return_pct
+FROM stock_prices
+GROUP BY ticker
+ORDER BY daily_volatility_pct DESC;

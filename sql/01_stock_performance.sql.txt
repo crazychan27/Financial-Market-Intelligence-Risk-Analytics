@@ -1,0 +1,36 @@
+
+WITH stock_start_end AS (
+    SELECT
+        ticker,
+        FIRST_VALUE(close) OVER (
+            PARTITION BY ticker ORDER BY date
+        ) AS first_close,
+        FIRST_VALUE(date) OVER (
+            PARTITION BY ticker ORDER BY date
+        ) AS first_date,
+        LAST_VALUE(close) OVER (
+            PARTITION BY ticker
+            ORDER BY date
+            ROWS BETWEEN UNBOUNDED PRECEDING
+            AND UNBOUNDED FOLLOWING
+        ) AS last_close,
+        LAST_VALUE(date) OVER (
+            PARTITION BY ticker
+            ORDER BY date
+            ROWS BETWEEN UNBOUNDED PRECEDING
+            AND UNBOUNDED FOLLOWING
+        ) AS last_date
+    FROM stock_prices
+)
+SELECT DISTINCT
+    ticker,
+    first_date,
+    ROUND(first_close, 2) AS first_close,
+    last_date,
+    ROUND(last_close, 2) AS last_close,
+    ROUND(
+        (last_close - first_close) / first_close * 100,
+        2
+    ) AS price_change_pct
+FROM stock_start_end
+ORDER BY price_change_pct DESC;

@@ -1,0 +1,31 @@
+
+WITH running_peaks AS (
+    SELECT
+        ticker,
+        date,
+        close,
+        MAX(close) OVER (
+            PARTITION BY ticker
+            ORDER BY date
+            ROWS BETWEEN UNBOUNDED PRECEDING
+            AND CURRENT ROW
+        ) AS running_peak
+    FROM stock_prices
+),
+drawdowns AS (
+    SELECT
+        ticker,
+        date,
+        close,
+        running_peak,
+        (close / NULLIF(running_peak, 0) - 1) * 100
+            AS drawdown_pct
+    FROM running_peaks
+)
+SELECT
+    ticker,
+    ROUND(MIN(drawdown_pct)::numeric, 2)
+        AS maximum_drawdown_pct
+FROM drawdowns
+GROUP BY ticker
+ORDER BY maximum_drawdown_pct ASC;

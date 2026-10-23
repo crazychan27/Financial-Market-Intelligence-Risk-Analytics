@@ -1,0 +1,52 @@
+
+WITH price_summary AS (
+    SELECT
+        ticker,
+        MIN(date) AS first_date,
+        MAX(date) AS last_date,
+        (ARRAY_AGG(close ORDER BY date))[1] AS first_close,
+        (ARRAY_AGG(close ORDER BY date DESC))[1] AS last_close,
+        AVG(daily_return) * 100 AS avg_daily_return_pct,
+        STDDEV(daily_return) * 100 AS daily_volatility_pct
+    FROM stock_prices
+    GROUP BY ticker
+),
+running_peaks AS (
+    SELECT
+        ticker,
+        date,
+        close,
+        MAX(close) OVER (
+            PARTITION BY ticker
+            ORDER BY date
+            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+        ) AS running_peak
+    FROM stock_prices
+),
+drawdown_summary AS (
+    SELECT
+        ticker,
+        MIN((close / NULLIF(running_peak, 0) - 1) * 100)
+            AS maximum_drawdown_pct
+    FROM running_peaks
+    GROUP BY ticker
+)
+SELECT
+    p.ticker,
+    p.first_date,
+    p.last_date,
+    ROUND(p.first_close, 2) AS first_close,
+    ROUND(p.last_close, 2) AS last_close,
+    ROUND(
+        ((p.last_close / p.first_close) - 1)::numeric * 100,
+        2
+    ) AS price_change_pct,
+    ROUND(p.avg_daily_return_pct::numeric, 4)
+        AS avg_daily_return_pct,
+    ROUND(p.daily_volatility_pct::numeric, 4)
+        AS daily_volatility_pct,
+    ROUND(d.maximum_drawdown_pct::numeric, 2)
+        AS maximum_drawdown_pct
+FROM price_summary p
+JOIN drawdown_summary d USING (ticker)
+ORDER BY price_change_pct DESC;
